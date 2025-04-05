@@ -784,6 +784,33 @@ void inOrderTraversalFam(fam_tree* root, FILE* file){
 
 
 
+int searchLinkedList(user_tree* lptr, int id, float expense, fam_tree* root) {
+    int found = 0;
+    user_tree* nptr = lptr;
+    while (nptr != NULL && !found) {
+        if (nptr->user_id == id) {
+            root->fam_expense += expense;
+            found = 1;
+        }
+        nptr = nptr->next;
+    }
+    return found;
+}
+
+int searchInFamUser(fam_tree **root, int target,float expense) {
+    if (root == NULL || *root == NULL) return 0; // Base case
+
+    // Check current node's linked list
+    int c = searchLinkedList((*root)->next_user, target,expense,(*root));
+    if(c == 1){
+        return 1;
+    }
+    // if (searchLinkedList((*root)->next_user, target,expense,(*root))) return 1;
+
+    // Search both left and right subtrees
+    return searchInFamUser(&((*root)->left), target,expense) || searchInFamUser(&((*root)->right), target,expense);
+}
+
 void input_user(user_tree **root,fam_tree **f1,user_tree **unbalanced1,int maxDepth,int*fam_id, fam_tree **unbalanced1_fam,int maxDepthFam){
     char line[100];
     FILE *file = fopen("input_user.txt", "r");
@@ -800,10 +827,12 @@ void input_user(user_tree **root,fam_tree **f1,user_tree **unbalanced1,int maxDe
             user_tree* user_input = makeNode_user(mem_id, income_user, name_user);
             (*root) = insertAVL((*root), user_input,unbalanced1, &maxDepth);
             if(cj_flag == 1){
+                float expense_fam = 0.00;
+                int count = 1;
                 char fam_name[100];
                 sprintf(fam_name, "%s's family", name_user);
                 *fam_id = *fam_id + 1;
-                fam_tree* fam_input = makeNode_fam(*fam_id,income_user,0.00,fam_name,1,user_input);
+                fam_tree* fam_input = makeNode_fam(*fam_id,income_user,expense_fam,fam_name,count,user_input);
                 (*f1)=insertAVLFam((*f1),fam_input,unbalanced1_fam,&maxDepthFam);
                 
             }
@@ -816,6 +845,7 @@ void input_user(user_tree **root,fam_tree **f1,user_tree **unbalanced1,int maxDe
                         ptr1 = ptr1->next;
                     }
                     ptr1->next = user_input;
+                    (*ptr)->fam_income += user_input->income;
                 }
                 //searh for family id by ptr =search_AVL_fam()
                 //*ptr->next_user and run while loop until it is not null
@@ -849,7 +879,9 @@ void input_user(user_tree **root,fam_tree **f1,user_tree **unbalanced1,int maxDe
 
 }
 
-void input_expense(expense_tree **root, expense_tree **unbalanced1, int maxDepth) {
+void output_fam(fam_tree *root); //fn protoype
+
+void input_expense(expense_tree **root,fam_tree **f1, expense_tree **unbalanced1, int maxDepth) {
     char line[150];  // Adjusted size to accommodate more fields
     FILE *file = fopen("input_expense.txt", "r");
     if (!file) {
@@ -865,9 +897,18 @@ void input_expense(expense_tree **root, expense_tree **unbalanced1, int maxDepth
         if (sscanf(line, "%d,%d,%49[^,],%f,%d", &mem_id, &exp_id, exp_cat, &exp_amt, &date) == 5) {
             expense_tree* expense_input = makeNode_expense(exp_id, exp_amt, exp_cat, date, mem_id);
             (*root) = insertAVLExp((*root), expense_input, unbalanced1, &maxDepth);
+            float expense = expense_input->exp_amt;
+            int a = searchInFamUser(f1,mem_id,expense);
+            if(a==1){
+                printf("Expenses default added to family\n");
+            }
+            //int a = searchINTree((*f1),mem_id)
+            //if(a==1) printf expenses added to family
+
         }
     }
     fclose(file);
+
 
     FILE *outputFile = fopen("exp_output.txt", "w");
     if (!outputFile) {
@@ -877,6 +918,9 @@ void input_expense(expense_tree **root, expense_tree **unbalanced1, int maxDepth
     inOrderTraversalExp((*root), outputFile);
     fclose(outputFile);
     //call inorder 
+
+    output_fam((*f1));
+    
 
 }
 
@@ -917,7 +961,7 @@ void output_fam(fam_tree *root){
 void create_joinFamily(int* cj, fam_tree** f1, user_tree* made_from_makeuser,int*fam_id,fam_tree **unbalanced1_fam, int maxDepthFam);
 
 
-void addUser(user_tree** root, int* cj, int* family_id, fam_tree** f1,user_tree **unbalanced1, int maxDepth, fam_tree **unbalanced1_fam,int* maxDepthFam){ 
+void addUser(user_tree** root, int* cj, int* family_id, fam_tree** f1,user_tree **unbalanced1, int maxDepth, fam_tree **unbalanced1_fam,int maxDepthFam){ 
     // we are passing the head of the user linked list as an argument ;
     user_tree* nptr ;
     user_tree **ptr;
@@ -960,11 +1004,11 @@ void addUser(user_tree** root, int* cj, int* family_id, fam_tree** f1,user_tree 
         printf("Enter 1 if you want to create a family or enter 0 if you want to join a family \n");
         scanf("%d",cj); 
         if(*cj==1){
-            create_joinFamily(cj,f1,kptr,family_id,unbalanced1_fam,*maxDepthFam); 
+            create_joinFamily(cj,f1,kptr,family_id,unbalanced1_fam,maxDepthFam); 
             flag_fam=0;
         }
         else if(*cj==0){
-            create_joinFamily(cj,f1,kptr,family_id,unbalanced1_fam,*maxDepthFam); 
+            create_joinFamily(cj,f1,kptr,family_id,unbalanced1_fam,maxDepthFam); 
             flag_fam=0;
         }
         else{
@@ -976,7 +1020,8 @@ void addUser(user_tree** root, int* cj, int* family_id, fam_tree** f1,user_tree 
 }
 
 
-void addExpense(expense_tree** e1, user_tree** u1, fam_tree** f1,expense_tree **unbalanced1, int maxDepth){
+
+void addExpense(expense_tree **e1, user_tree **u1, fam_tree **f1,expense_tree **unbalanced1, int maxDepth){
 
     int id, is_true_user = 1 ;
     int found = 0, found1 =1, found2 = 0;
@@ -984,16 +1029,14 @@ void addExpense(expense_tree** e1, user_tree** u1, fam_tree** f1,expense_tree **
     float money_out;
     char exp_cat[CATEGORY_LEN];
 
+    
     while(is_true_user == 1){
         printf("Enter the user id of the person whose expense record is to be stored: \n");
         scanf("%d",&id);
         // try passing the head of user as an argument to the add_expense function 
-        user_tree **ptr = u1 ; // check
+        user_tree **ptr ; // check  //didnt wtie = u1;
         ptr = Search_AVL(u1,id);
-        if(ptr == NULL){
-            is_true_user = 1;
-            printf("Given id dosent exist\n");
-        }
+        
         if((ptr != NULL)&&((*ptr)!=NULL)&&((*ptr)->user_id == id)){
             is_true_user = 0;
             printf("Id exists\n");
@@ -1011,18 +1054,28 @@ void addExpense(expense_tree** e1, user_tree** u1, fam_tree** f1,expense_tree **
                     scanf("%d",&date);
                     
                 }
-                if((ptr1 != NULL)&&((*ptr1)!=NULL)&&((*ptr1)->expense_id == exp_id)){
-                    found = 0;
-                    printf("Expense id already exists\n");
-                }
+                
             }
         
+        }
+        if(ptr == NULL){
+            is_true_user = 1;
+            printf("Given id dosent exist\n");
         }
          
     }
     expense_tree* nptr = makeNode_expense(exp_id,money_out,exp_cat,date,id);
     (*e1) = insertAVLExp((*e1), nptr,unbalanced1, &maxDepth);
+    float expense = nptr->exp_amt;
+    int a = searchInFamUser(f1,id,expense);
+    if(a==1){
+        printf("Expenses added to family\n");
+    }
+    //int a = searchINTree((*f1),mem_id)
+    //if(a==1) printf expenses added to family
+    //output_fam((*f1));
     output_expense((*e1));
+    output_fam((*f1));
 }
 
 void create_joinFamily(int* cj, fam_tree** f1, user_tree* made_from_makeuser,int*fam_id,fam_tree **unbalanced1_fam, int maxDepthFam){
@@ -1043,7 +1096,7 @@ void create_joinFamily(int* cj, fam_tree** f1, user_tree* made_from_makeuser,int
         fptr = makeNode_fam(*fam_id,fam_income,fam_expense,std_fam_name,count,made_from_makeuser);
         // but remember ki tujhe madefrommakeuser me change lana hai , so double pointer pass karsakta hai 
         (*f1) = insertAVLFam((*f1), fptr,unbalanced1_fam, &maxDepthFam);
-        //output_fam((*f1));
+        output_fam((*f1));
         
         printf("Family id is : %d\n",*fam_id);  
 
@@ -1080,7 +1133,7 @@ void create_joinFamily(int* cj, fam_tree** f1, user_tree* made_from_makeuser,int
             }
             
         }
-            
+        output_fam((*f1));    
     }
            
 }
@@ -1102,13 +1155,14 @@ int main(){
     int fam_id = 0;
 
     input_user(&root,&f1,&unbalanced1,maxDepth,&fam_id,&unbalanced1_fam,maxDepthFam);
-    // input_expense(&root_exp,&unbalanced1_exp,maxDepth_exp);
+    input_expense(&root_exp,&f1,&unbalanced1_exp,maxDepth_exp);
     //make an input function to take user inputfrom file 
     //after this call the addUser
-    printf("User root is %d\n",root->user_id);// working good 
+    
 
-    // addUser(&root,&cj,&fam_id,&f1,&unbalanced1,maxDepth);
-    // addExpense(&root_exp,&root,&f1,&unbalanced1_exp,maxDepth_exp);
+    addUser(&root,&cj,&fam_id,&f1,&unbalanced1,maxDepth,&unbalanced1_fam,maxDepthFam);
+    printf("User root is %d\n",root->user_id);// working good 
+    addExpense(&root_exp,&root,&f1,&unbalanced1_exp,maxDepth_exp);
 
     
 
