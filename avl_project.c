@@ -789,6 +789,7 @@ int searchLinkedList(user_tree* lptr, int id, float expense, fam_tree* root) {
     user_tree* nptr = lptr;
     while (nptr != NULL && !found) {
         if (nptr->user_id == id) {
+            root->fam_expense = 0.00; //this ensures that even if i want to update it it will get reset to 0 before assigning it a new value
             root->fam_expense += expense;
             found = 1;
         }
@@ -810,6 +811,24 @@ int searchInFamUser(fam_tree **root, int target,float expense) {
     // Search both left and right subtrees
     return searchInFamUser(&((*root)->left), target,expense) || searchInFamUser(&((*root)->right), target,expense);
 }
+
+expense_tree* searchInExpExpId(expense_tree **root,int exp_id) {
+    int upd_date;
+    float upd_exp_amt;
+    char upd_exp_cat[CATEGORY_LEN];
+    if (root == NULL || *root == NULL) return NULL; // Base case
+
+    // Check current node's linked list
+    if((*root)->expense_id == exp_id){
+        return (*root);
+    }
+    
+    expense_tree* leftSearch = searchInExpExpId(&((*root)->left), exp_id);
+    if (leftSearch) return leftSearch;
+
+    return searchInExpExpId(&((*root)->right), exp_id);
+}
+///this searches for expid in exp tree updates it and also updates in fam_tree
 
 void input_user(user_tree **root,fam_tree **f1,user_tree **unbalanced1,int maxDepth,int*fam_id, fam_tree **unbalanced1_fam,int maxDepthFam){
     char line[100];
@@ -1139,6 +1158,62 @@ void create_joinFamily(int* cj, fam_tree** f1, user_tree* made_from_makeuser,int
 }
 
 
+void update_delete_expense(fam_tree** f1, expense_tree** e1){
+
+    int flag, found=0, found1= 0, found2 = 0, found3 = 0, exp_id_upd, exp_id_del, upd_date;
+    float upd_exp_amt;
+    char upd_exp_cat[CATEGORY_LEN];
+    
+
+    printf("Do you want to delete or update expense? delete=1, update=0: \n");
+    scanf("%d",&flag);
+    if(flag == 0){
+        printf("Which expense id information do u want to update: \n");
+        scanf("%d",&exp_id_upd);
+        //search for expense_id in expense_tree
+        //do similar function as searchAVLFamUser wherein 
+        //we go to lst and rst and search for expid
+        expense_tree* foundNode = searchInExpExpId(e1,exp_id_upd);
+        if(foundNode != NULL){
+            printf("If exp cat has to be changed give different, else provide the same one: \n");
+            scanf("%s", foundNode->expense_cat);
+
+            printf("If u want to change the exp amt, give new exp amt else give old income: \n");
+            scanf("%f", &foundNode->exp_amt);
+
+            printf("If date has to be changed give different, else provide the same one: \n");
+            scanf("%d", &foundNode->date);
+
+            int user_id = foundNode->member_id;
+            int k = searchInFamUser(&f1, user_id, foundNode->exp_amt);
+            if(k==1){
+                printf("Exp changes updated everywhere\n");
+            }
+        }
+        else{
+            printf("Expense id not found\n");
+        }
+        
+    }
+    else{
+        printf("Which expense id information do u want to delete: \n");
+        scanf("%d",&exp_id_del);
+        expense_tree* foundNode = searchInExpExpId(e1,exp_id_upd);
+        
+        if(foundNode != NULL){
+            //famtree me jaake uss family ke exp se subtract kardena 
+            //call deleteRotCondCheckExp here 
+            //this will ensure family se initially exp kam hojayega and then wo exp_tree se delete hojayega
+            printf("Expense deleted\n");
+            
+        }
+        else{
+            printf("Expense id not found\n");
+        }
+
+    }
+}
+
 
 
 int main(){
@@ -1168,27 +1243,18 @@ int main(){
 
 }
 
-//the following needs to be added in a wrapper function named SearchAVLFamExp
-// in which we need to go to every family node 
-//then acccess the linked list 
-//then search for the user id
-
-
-// while((ptr_tr_1 != NULL)&&(found2 == 0)){
-//     user* ptr_tr_2 = ptr_tr_1->next_user;
-//     while((ptr_tr_2 != NULL)&&(found2 == 0)){
-//         if(ptr_tr_2->user_id == id){
-//             ptr_tr_1->fam_expense += nptr->exp_amt;
-//             found2 = 1;
-//         }
-//         else{
-//             ptr_tr_2 = ptr_tr_2->next ;
-//         }
+        // printf("If exp cat has to be changed give different,else provide the same one: \n");
+        // scanf("%s",upd_exp_cat);
+        // printf("If u want to change the exp amt, give new exp amt else give old income: \n");
+        // scanf("%f",&upd_exp_amt);
+        // printf("If date has to be changed give different,else provide the same one: \n");
+        // scanf("%d",&upd_date);
         
-//     }
-//     ptr_tr_1 = ptr_tr_1->next;
-// }
-
-// printf("Expense added \n");
-
-// }
+        // (*root)->date = upd_date ;
+        // // ptr->exp_amt = upd_exp_amt ; this has been incorporated in the next loop
+        // strcpy((*root)->expense_cat, upd_exp_cat);
+        // (*root)->exp_amt = upd_exp_amt;
+        
+        // int user_id = (*root)->member_id;
+        // int a = searchInFamUser(f1,user_id,upd_exp_amt);
+        // return 1;

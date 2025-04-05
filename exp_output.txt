@@ -1,0 +1,9 @@
+1,5004,Internet,60.00,5
+3,5003,Rent,1500.00,1
+4,5005,Transport,45.25,8
+4,5006,Entertainment,100.00,20
+5,5007,Healthcare,300.00,10
+10,5000,Groceries,567.89,3
+10,5001,Groceries,120.50,12
+10,5002,Electricity,250.75,15
+15,5008,Shopping,200.99,18
