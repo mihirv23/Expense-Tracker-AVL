@@ -789,7 +789,9 @@ int searchLinkedList(user_tree* lptr, int id, float expense, fam_tree* root) {
     user_tree* nptr = lptr;
     while (nptr != NULL && !found) {
         if (nptr->user_id == id) {
-            root->fam_expense = 0.00; //this ensures that even if i want to update it it will get reset to 0 before assigning it a new value
+            //id has been found so this is the family
+            //recalculate the total expense 
+            // root->fam_expense = 0.00; //this ensures that even if i want to update it it will get reset to 0 before assigning it a new value
             root->fam_expense += expense;
             found = 1;
         }
@@ -812,7 +814,7 @@ int searchInFamUser(fam_tree **root, int target,float expense) {
     return searchInFamUser(&((*root)->left), target,expense) || searchInFamUser(&((*root)->right), target,expense);
 }
 
-expense_tree* searchInExpExpId(expense_tree **root,int exp_id) {
+expense_tree** searchInExpExpId(expense_tree **root,int exp_id) {
     int upd_date;
     float upd_exp_amt;
     char upd_exp_cat[CATEGORY_LEN];
@@ -820,15 +822,160 @@ expense_tree* searchInExpExpId(expense_tree **root,int exp_id) {
 
     // Check current node's linked list
     if((*root)->expense_id == exp_id){
-        return (*root);
+        return root;
     }
     
-    expense_tree* leftSearch = searchInExpExpId(&((*root)->left), exp_id);
-    if (leftSearch) return leftSearch;
+    expense_tree **left = searchInExpExpId(&((*root)->left), exp_id);
+    if (left != NULL) return left;
 
     return searchInExpExpId(&((*root)->right), exp_id);
 }
 ///this searches for expid in exp tree updates it and also updates in fam_tree
+
+
+void delete_AVLExp(expense_tree **parent_ptr){
+    expense_tree* r, *q ,*p;
+    r = *parent_ptr ;
+    if(r == NULL){printf("ERROR\n");}
+    else{
+        if((r->left == NULL)&&(r->right == NULL)){
+            //leaf node case 
+            free(r);
+            *parent_ptr = NULL;
+        }
+        else if(r->left == NULL){
+            *parent_ptr = r->right ;
+        }
+        else if(r->right == NULL){
+            *parent_ptr = r->left;
+        }
+        else{
+            p=q=r->left ;
+            while(q->right != NULL){
+                p=q; //p is prev node
+                q = q->right;
+            }
+            p->right = q->left ;
+            q->left = r->left;
+            q->right = r->right;
+            *parent_ptr = q;
+        }
+    }
+    // printf("Done with deleteAVL\n");
+}
+
+expense_tree* deleteRotCndCheckExp(expense_tree **root, expense_tree* toDel,expense_tree** unbalanced1,int* maxDepth){
+    
+    int left_ht = heightTreeExp((*root)->left,unbalanced1,maxDepth);
+    int right_ht = heightTreeExp((*root)->right,unbalanced1,maxDepth);
+
+    if(left_ht == right_ht){
+        expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+        if(temp_del != NULL){
+            int deleted_value = (*temp_del)->expense_id;
+            delete_AVLExp(temp_del);//initially it was &root
+            printf("Ele %d deleted\n",deleted_value);
+        }
+        else{
+            printf("Element not found\n");
+        }
+    }
+    else if((left_ht-right_ht) == 1){
+        // this will cover 2 cases
+        if((toDel->member_id < (*root)->member_id)||((toDel->member_id == (*root)->member_id)&&(toDel->expense_id < (*root)->expense_id))){
+            expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+            if(temp_del != NULL){
+                int deleted_value = (*temp_del)->expense_id;
+                delete_AVLExp(temp_del);
+                // printf("element deleted\n");
+                printf("Ele %d deleted\n",deleted_value);
+            }
+            else{
+                printf("Element not found\n");
+            }
+        }
+        else{
+            expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+            if(temp_del != NULL){
+                int deleted_value = (*temp_del)->expense_id;
+                delete_AVLExp(temp_del);//post this it is twice left tilted
+                printf("Root now is %d\n",(*root)->expense_id);
+                printf("Ele %d deleted, now rotating \n",deleted_value);
+                
+                printf("max depth now is%d\n",*maxDepth); 
+                *maxDepth = -999999;  // Reset before recalculating height
+                int a = heightTreeExp(*root,unbalanced1,maxDepth);
+                
+                printf("height of tree is %d\n",a);
+                if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+                    printf("Unbalanced1 is NULL, skipping rotation\n");
+                } else {
+                    printf("Unbalanced node is %d\n", (*unbalanced1)->expense_id);
+                    int e = (*unbalanced1)->expense_id;
+                    int u = (*unbalanced1)->member_id;
+                    *root = searchSubsExp(*root,u,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+                    printf("rotations req and done, root is %d\n",(*root)->expense_id);
+                }
+        
+                // if (abs(left_ht - right_ht) > 1) {
+                //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
+                // }
+                // root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
+                //here root is the true root which we are passing as the unbalanced one 
+            }
+        }
+    }
+    else if((right_ht-left_ht) == 1){
+        if((toDel->member_id > (*root)->member_id)||((toDel->member_id == (*root)->member_id)&&(toDel->expense_id > (*root)->expense_id))){
+            printf("checking RST \n");
+            expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+            printf("Done searching\n");
+            if(temp_del != NULL){
+                printf("inside delete block\n");
+                int deleted_value = (*temp_del)->expense_id;
+                delete_AVLExp(temp_del);
+                printf("Ele %d deleted\n",deleted_value);
+                //this had to be written bcos after temp_del has been deleted wecant access temp_del_>data right 
+            }
+            else{
+                printf("Element not found\n");
+            }
+        }
+        else {
+            expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+            if(temp_del != NULL){
+                int deleted_value = (*temp_del)->expense_id;
+                delete_AVLExp(temp_del);//post this it is twice right tilted
+                printf("Ele %d deleted, now rotating \n",deleted_value);
+                // left_ht = heightTree((*root)->left, unbalanced1, maxDepth);
+                // right_ht = heightTree((*root)->right, unbalanced1, maxDepth);
+                printf("max depth now is%d\n",*maxDepth); 
+                *maxDepth = -999999;  // Reset before recalculating height
+                int a = heightTreeExp(*root,unbalanced1,maxDepth);
+                
+                printf("height of tree is %d\n",a);
+                if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+                    printf("Unbalanced1 is NULL, skipping rotation\n");
+                } else {
+                    printf("Unbalanced node is %d\n", (*unbalanced1)->expense_id);
+                    int e = (*unbalanced1)->expense_id;
+                    int u = (*unbalanced1)->member_id;
+                    *root = searchSubsExp(*root,u,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+                    printf("rotations req and done, root is %d\n",(*root)->expense_id);
+                }
+                
+                // if (abs(left_ht - right_ht) > 1) {
+                //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
+                // }
+                // *root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
+                //here root is the true root which we are passing as the unbalanced one 
+            }
+        }
+    }
+
+    return *root;
+}
+
 
 void input_user(user_tree **root,fam_tree **f1,user_tree **unbalanced1,int maxDepth,int*fam_id, fam_tree **unbalanced1_fam,int maxDepthFam){
     char line[100];
@@ -975,6 +1122,8 @@ void output_fam(fam_tree *root){
     inOrderTraversalFam(root, outputFileFam);
     fclose(outputFileFam);
 }
+
+
 
 //fn prototype
 void create_joinFamily(int* cj, fam_tree** f1, user_tree* made_from_makeuser,int*fam_id,fam_tree **unbalanced1_fam, int maxDepthFam);
@@ -1158,7 +1307,7 @@ void create_joinFamily(int* cj, fam_tree** f1, user_tree* made_from_makeuser,int
 }
 
 
-void update_delete_expense(fam_tree** f1, expense_tree** e1){
+void update_delete_expense(fam_tree** f1, expense_tree** e1,expense_tree **unbalanced1, int maxDepthExp){
 
     int flag, found=0, found1= 0, found2 = 0, found3 = 0, exp_id_upd, exp_id_del, upd_date;
     float upd_exp_amt;
@@ -1173,19 +1322,26 @@ void update_delete_expense(fam_tree** f1, expense_tree** e1){
         //search for expense_id in expense_tree
         //do similar function as searchAVLFamUser wherein 
         //we go to lst and rst and search for expid
-        expense_tree* foundNode = searchInExpExpId(e1,exp_id_upd);
-        if(foundNode != NULL){
+        expense_tree **foundNode = searchInExpExpId(e1,exp_id_upd);
+        
+        if((foundNode != NULL)&&(*foundNode != NULL)){
+            int user_id = (*foundNode)->member_id;
+            int m = searchInFamUser(f1, user_id, -(*foundNode)->exp_amt);
+            if(m==1){
+                printf("Initial exp changed\n");
+            }
+            //the negative sign is imp
             printf("If exp cat has to be changed give different, else provide the same one: \n");
-            scanf("%s", foundNode->expense_cat);
+            scanf("%s", (*foundNode)->expense_cat);
 
             printf("If u want to change the exp amt, give new exp amt else give old income: \n");
-            scanf("%f", &foundNode->exp_amt);
+            scanf("%f", &(*foundNode)->exp_amt);
 
             printf("If date has to be changed give different, else provide the same one: \n");
-            scanf("%d", &foundNode->date);
+            scanf("%d", &(*foundNode)->date);
 
-            int user_id = foundNode->member_id;
-            int k = searchInFamUser(&f1, user_id, foundNode->exp_amt);
+
+            int k = searchInFamUser(f1, user_id, (*foundNode)->exp_amt);
             if(k==1){
                 printf("Exp changes updated everywhere\n");
             }
@@ -1198,20 +1354,30 @@ void update_delete_expense(fam_tree** f1, expense_tree** e1){
     else{
         printf("Which expense id information do u want to delete: \n");
         scanf("%d",&exp_id_del);
-        expense_tree* foundNode = searchInExpExpId(e1,exp_id_upd);
         
-        if(foundNode != NULL){
+        expense_tree **foundNode = searchInExpExpId(e1,exp_id_del);
+        if((foundNode != NULL)&&(*foundNode != NULL)){
+            int user_id = (*foundNode)->member_id;
+            int k = searchInFamUser(f1, user_id, -(*foundNode)->exp_amt);
+            if(k==1){
+                printf("Exp changes updated everywhere\n");
+            }
+            (*e1) = deleteRotCndCheckExp(e1,(*foundNode),unbalanced1,&maxDepthExp);
+            printf("Expense deleted\n");
+        }
+        
+        if(foundNode == NULL){
             //famtree me jaake uss family ke exp se subtract kardena 
             //call deleteRotCondCheckExp here 
             //this will ensure family se initially exp kam hojayega and then wo exp_tree se delete hojayega
-            printf("Expense deleted\n");
+            printf("Expense id not found\n");
             
         }
-        else{
-            printf("Expense id not found\n");
-        }
+        
 
     }
+    output_expense((*e1));
+    output_fam((*f1));
 }
 
 
@@ -1235,9 +1401,11 @@ int main(){
     //after this call the addUser
     
 
-    addUser(&root,&cj,&fam_id,&f1,&unbalanced1,maxDepth,&unbalanced1_fam,maxDepthFam);
-    printf("User root is %d\n",root->user_id);// working good 
-    addExpense(&root_exp,&root,&f1,&unbalanced1_exp,maxDepth_exp);
+    // addUser(&root,&cj,&fam_id,&f1,&unbalanced1,maxDepth,&unbalanced1_fam,maxDepthFam);
+    // printf("User root is %d\n",root->user_id);// working good 
+    // addExpense(&root_exp,&root,&f1,&unbalanced1_exp,maxDepth_exp);
+
+    update_delete_expense(&f1,&root_exp,&unbalanced1_exp,maxDepth_exp);
 
     
 
