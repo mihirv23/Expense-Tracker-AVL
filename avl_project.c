@@ -1272,6 +1272,66 @@ fam_tree* deleteRotCndCheckNewFam(fam_tree **root, int toDel,fam_tree** unbalanc
     return *root;
 }
 
+//identifyUserFam call karna hai
+//we will  get  fam ka node 
+//fir we will go to e1
+//if (*e1)->member_id == id 
+void printExpenseTree(expense_tree* root) {
+    if (root == NULL){
+        printf("root is empty\n");
+        return;
+    }
+    printExpenseTree(root->left);
+    printf("Exp ID: %d, Member ID: %d, Amount: %d\n", root->expense_id, root->member_id, root->exp_amt);
+    printExpenseTree(root->right);
+}
+
+
+expense_tree** recurseExpUserid(expense_tree **root_ref, int user_id) {
+    if (*root_ref == NULL){
+        printf("root_ref is NULL\n");
+        return NULL;
+    }
+        
+
+    if ((*root_ref)->member_id == user_id) {
+        printf("user id found in exptree\n");
+        return root_ref;  // First match
+    }
+
+    // Try left
+    expense_tree** left_result = recurseExpUserid(&((*root_ref)->left), user_id);
+    if (left_result != NULL) return left_result;
+
+    // Try right
+    return recurseExpUserid(&((*root_ref)->right), user_id);
+}
+void output_expense(expense_tree *root); //fn prototype
+
+void deleteExpenseFromUserID(expense_tree **e1, int user_id, fam_tree **f1,
+    expense_tree **unbalanced1_exp, int* maxDepthExp) {
+    printf("Inside deleteexpenseFromUserID\n");
+    expense_tree **toDel_ref = NULL;
+    printf("Before deleting, the tree looks like:\n");
+    printExpenseTree(*e1);
+
+    while ((toDel_ref = recurseExpUserid(e1, user_id)) != NULL) {
+        printf("Inside expesne deletion for userid");
+        int exp_id = (*toDel_ref)->expense_id;
+    
+        if(searchInFamUser(f1,user_id,-(*toDel_ref)->exp_amt,0)){
+            printf("Family me changes kiye hai\n");
+        }
+        // Optional: Update user's total expenses here using userInFam
+
+        printf("Deleting expense_id %d for user_id %d\n", exp_id, user_id);
+        *e1 = deleteRotCndCheckNewExp(e1, exp_id, unbalanced1_exp, maxDepthExp);
+        
+    }
+
+    printf("All expenses deleted for user_id %d\n", user_id);
+    output_expense((*e1));
+}
 
 
 void input_user(user_tree **root,fam_tree **f1,user_tree **unbalanced1,int maxDepth,int*fam_id, fam_tree **unbalanced1_fam,int maxDepthFam){
@@ -1695,7 +1755,7 @@ void update_delete_expense(fam_tree** f1, expense_tree** e1,expense_tree **unbal
     output_fam((*f1));
 }
 
-void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unbalanced1, int* maxDepth, fam_tree **unbalanced1_fam, int* maxDepthFam){
+void update_individual_fam_details(user_tree **u1, fam_tree **f1,expense_tree **e1,user_tree **unbalanced1, int* maxDepth, fam_tree **unbalanced1_fam, int* maxDepthFam, expense_tree **unbalanced1_exp, int* maxDepthExp){
     int flag, flag2, flag3, id,fam_id, user_id_del,fam_id_del;
     
 
@@ -1771,6 +1831,8 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
                 printf("user id dosent exist\n");
             }
             if((foundNode != NULL)&&(*foundNode != NULL)){
+                
+                
                 fam_tree* fam_node = identifyUserFamily(f1,user_id_del);
                 if(fam_node != NULL){
                     int family_id_del = fam_node->fam_id;
@@ -1778,6 +1840,9 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
                     if(fam_node->count == 1){
                         user_tree* user_node = fam_node->next_user;
                         printf("We are going to del %d user\n",user_id_del);
+
+                        deleteExpenseFromUserID(e1,user_id_del,f1,unbalanced1_exp,maxDepthExp);
+
                         (*u1) = deleteRotCndCheckNewUser(u1,user_id_del,unbalanced1,maxDepth);
                         printf("User deleted\n");
                         (*f1) = deleteRotCndCheckNewFam(f1,family_id_del,unbalanced1_fam,maxDepthFam);
@@ -1790,6 +1855,9 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
                         // user_tree *user_del = (user_tree*)malloc(sizeof(user_tree));
                         int flag_user = 0;
                         printf("We are going to del %d user\n",user_id_del);
+                        deleteExpenseFromUserID(e1,user_id_del,f1,unbalanced1_exp,maxDepthExp);
+                        printf("**delete expense from user id performed**\n");
+
                         (*u1) = deleteRotCndCheckNewUser(u1,user_id_del,unbalanced1,maxDepth);
 
                         user_tree* trav_ptr = fam_node->next_user;
@@ -1857,6 +1925,8 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
                         user_tree **searchNode = Search_AVL(u1, nptr->user_id);
                         int search_id = (*searchNode)->user_id;
                         if ((searchNode != NULL)&&((*searchNode)!= NULL)) {
+                            deleteExpenseFromUserID(e1,search_id,f1,unbalanced1_exp,maxDepthExp);
+
                             (*u1) = deleteRotCndCheckNewUser(u1, search_id, unbalanced1, maxDepth);
                         } else {
                             printf("User %d not found in AVL tree\n", nptr->user_id);
@@ -1889,7 +1959,7 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
     }
 }
 
-//deletion is problematic
+
 
 void get_total_expense(fam_tree **f1){
     int fam_id, flag = 0;
@@ -2246,7 +2316,7 @@ int main(){
     // addExpense(&root_exp,&root,&f1,&unbalanced1_exp,maxDepth_exp);
 
     // update_delete_expense(&f1,&root_exp,&unbalanced1_exp,maxDepth_exp);
-    update_individual_fam_details(&root,&f1,&unbalanced1,&maxDepth,&unbalanced1_fam,&maxDepthFam);
+    update_individual_fam_details(&root,&f1,&root_exp,&unbalanced1,&maxDepth,&unbalanced1_fam,&maxDepthFam,&unbalanced1_exp,&maxDepth_exp);
     // get_total_expense(&f1);
     // get_individual_expense(&root,&root_exp);
     // get_categorical_expense(&f1,&root,&root_exp);

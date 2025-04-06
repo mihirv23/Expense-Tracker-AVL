@@ -1,6 +1,3 @@
-1,John's family,55000.50,1871.25
-   User: 10,John,55000.50
-
 2,Charlie's family,161001.16,505.25
    User: 1,Charlie,60000.00
    User: 4,David,48000.25
