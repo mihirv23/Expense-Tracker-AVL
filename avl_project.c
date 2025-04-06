@@ -1276,15 +1276,7 @@ fam_tree* deleteRotCndCheckNewFam(fam_tree **root, int toDel,fam_tree** unbalanc
 //we will  get  fam ka node 
 //fir we will go to e1
 //if (*e1)->member_id == id 
-void printExpenseTree(expense_tree* root) {
-    if (root == NULL){
-        printf("root is empty\n");
-        return;
-    }
-    printExpenseTree(root->left);
-    printf("Exp ID: %d, Member ID: %d, Amount: %d\n", root->expense_id, root->member_id, root->exp_amt);
-    printExpenseTree(root->right);
-}
+
 
 
 expense_tree** recurseExpUserid(expense_tree **root_ref, int user_id) {
