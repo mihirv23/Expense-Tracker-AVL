@@ -1087,17 +1087,23 @@ void delete_AVLExp(expense_tree **parent_ptr){
             *parent_ptr = r->left;
         }
         else{
-            p=q=r->left ;
+            p=NULL;
+            q=r->left ;
             while(q->right != NULL){
                 p=q; //p is prev node
                 q = q->right;
             }
-            p->right = q->left ;
-            q->left = r->left;
+            if(p != NULL){
+                p->right = q->left ;
+                q->left = r->left;
+            }
+            
             q->right = r->right;
             *parent_ptr = q;
         }
+        free(r);
     }
+    
     // printf("Done with deleteAVL\n");
 }
 
@@ -1118,17 +1124,23 @@ void delete_AVL(user_tree **parent_ptr){
             *parent_ptr = r->left;
         }
         else{
-            p=q=r->left ;
+            p=NULL;
+            q=r->left ;
             while(q->right != NULL){
                 p=q; //p is prev node
                 q = q->right;
             }
-            p->right = q->left ;
-            q->left = r->left;
+            if(p != NULL){
+                p->right = q->left ;
+                q->left = r->left;
+            }
+            
             q->right = r->right;
             *parent_ptr = q;
         }
+        free(r);
     }
+    
     // printf("Done with deleteAVL\n");
 }
 
@@ -1149,363 +1161,453 @@ void delete_AVLFam(fam_tree **parent_ptr){
             *parent_ptr = r->left;
         }
         else{
-            p=q=r->left ;
+            p=NULL;
+            q=r->left ;
             while(q->right != NULL){
                 p=q; //p is prev node
                 q = q->right;
             }
-            p->right = q->left ;
-            q->left = r->left;
+            if(p != NULL){
+                p->right = q->left ;
+                q->left = r->left;
+            }
+            
             q->right = r->right;
             *parent_ptr = q;
         }
+        free(r);
     }
+    
     // printf("Done with deleteAVL\n");
 }
 
-expense_tree* deleteRotCndCheckExp(expense_tree **root, expense_tree* toDel,expense_tree** unbalanced1,int* maxDepth){
-    
-    int left_ht = heightTreeExp((*root)->left,unbalanced1,maxDepth);
-    int right_ht = heightTreeExp((*root)->right,unbalanced1,maxDepth);
-
-    if(left_ht == right_ht){
-        expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
-        if(temp_del != NULL){
-            int deleted_value = (*temp_del)->expense_id;
-            delete_AVLExp(temp_del);//initially it was &root
-            printf("Ele %d deleted\n",deleted_value);
-        }
-        else{
-            printf("Element not found\n");
-        }
-    }
-    else if((left_ht-right_ht) == 1){
-        // this will cover 2 cases
-        if((toDel->member_id < (*root)->member_id)||((toDel->member_id == (*root)->member_id)&&(toDel->expense_id < (*root)->expense_id))){
-            expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
-            if(temp_del != NULL){
-                int deleted_value = (*temp_del)->expense_id;
-                delete_AVLExp(temp_del);
-                // printf("element deleted\n");
-                printf("Ele %d deleted\n",deleted_value);
-            }
-            else{
-                printf("Element not found\n");
-            }
-        }
-        else{
-            expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
-            if(temp_del != NULL){
-                int deleted_value = (*temp_del)->expense_id;
-                delete_AVLExp(temp_del);//post this it is twice left tilted
-                printf("Root now is %d\n",(*root)->expense_id);
-                printf("Ele %d deleted, now rotating \n",deleted_value);
-                
-                printf("max depth now is%d\n",*maxDepth); 
-                *maxDepth = -999999;  // Reset before recalculating height
-                int a = heightTreeExp(*root,unbalanced1,maxDepth);
-                
-                printf("height of tree is %d\n",a);
-                if (unbalanced1 == NULL || *unbalanced1 == NULL) {
-                    printf("Unbalanced1 is NULL, skipping rotation\n");
-                } else {
-                    printf("Unbalanced node is %d\n", (*unbalanced1)->expense_id);
-                    int e = (*unbalanced1)->expense_id;
-                    int u = (*unbalanced1)->member_id;
-                    *root = searchSubsExp(*root,u,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
-                    printf("rotations req and done, root is %d\n",(*root)->expense_id);
-                }
+user_tree* deleteRotCndCheckNewUser(user_tree **root, user_tree* toDel,user_tree** unbalanced1,int* maxDepth){
+    user_tree **temp_del =Search_AVL(root,toDel->user_id);
+    if(temp_del != NULL){
+        int deleted_value = (*temp_del)->user_id;
+        delete_AVL(temp_del);
+        printf("Root now is %d\n",(*root)->user_id);
+        // printf("Root->left is %d\n",(*root)->left->user_id);
+        printf("Ele %d deleted, now rotating \n",deleted_value);
         
-                // if (abs(left_ht - right_ht) > 1) {
-                //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
-                // }
-                // root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
-                //here root is the true root which we are passing as the unbalanced one 
-            }
-        }
-    }
-    else if((right_ht-left_ht) == 1){
-        if((toDel->member_id > (*root)->member_id)||((toDel->member_id == (*root)->member_id)&&(toDel->expense_id > (*root)->expense_id))){
-            printf("checking RST \n");
-            expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
-            printf("Done searching\n");
-            if(temp_del != NULL){
-                printf("inside delete block\n");
-                int deleted_value = (*temp_del)->expense_id;
-                delete_AVLExp(temp_del);
-                printf("Ele %d deleted\n",deleted_value);
-                //this had to be written bcos after temp_del has been deleted wecant access temp_del_>data right 
-            }
-            else{
-                printf("Element not found\n");
-            }
-        }
-        else {
-            expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
-            if(temp_del != NULL){
-                int deleted_value = (*temp_del)->expense_id;
-                delete_AVLExp(temp_del);//post this it is twice right tilted
-                printf("Ele %d deleted, now rotating \n",deleted_value);
-                // left_ht = heightTree((*root)->left, unbalanced1, maxDepth);
-                // right_ht = heightTree((*root)->right, unbalanced1, maxDepth);
-                printf("max depth now is%d\n",*maxDepth); 
-                *maxDepth = -999999;  // Reset before recalculating height
-                int a = heightTreeExp(*root,unbalanced1,maxDepth);
-                
-                printf("height of tree is %d\n",a);
-                if (unbalanced1 == NULL || *unbalanced1 == NULL) {
-                    printf("Unbalanced1 is NULL, skipping rotation\n");
-                } else {
-                    printf("Unbalanced node is %d\n", (*unbalanced1)->expense_id);
-                    int e = (*unbalanced1)->expense_id;
-                    int u = (*unbalanced1)->member_id;
-                    *root = searchSubsExp(*root,u,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
-                    printf("rotations req and done, root is %d\n",(*root)->expense_id);
-                }
-                
-                // if (abs(left_ht - right_ht) > 1) {
-                //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
-                // }
-                // *root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
-                //here root is the true root which we are passing as the unbalanced one 
-            }
-        }
-    }
+        printf("max depth now is%d\n",*maxDepth); 
+        *maxDepth = -999999;  // Reset before recalculating height
+        
+        int a = heightTree((*root),unbalanced1,maxDepth);
 
+        printf("height of tree is %d\n",a);
+        if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+            printf("Unbalanced1 is NULL, skipping rotation\n");
+        } else {
+            printf("Unbalanced node is %d\n", (*unbalanced1)->user_id);
+            int e = (*unbalanced1)->user_id;
+            *root = searchSubs(*root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+            printf("rotations req and done, root is %d\n",(*root)->user_id);
+        }
+    }
     return *root;
 }
 
-user_tree* deleteRotCndCheckUser(user_tree **root, user_tree* toDel,user_tree** unbalanced1,int* maxDepth){
-    
-    int left_ht = heightTree((*root)->left,unbalanced1,maxDepth);
-    int right_ht = heightTree((*root)->right,unbalanced1,maxDepth);
-
-    if(left_ht == right_ht){
-        user_tree **temp_del =Search_AVL(root,toDel->user_id);
-        if(temp_del != NULL){
-            int deleted_value = (*temp_del)->user_id;
-            delete_AVL(temp_del);//initially it was &root
-            printf("Ele %d deleted\n",deleted_value);
-            *maxDepth = -999999;
-            int a = heightTree((*root)->right,unbalanced1,maxDepth);
-            if((unbalanced1 != NULL)&&((*unbalanced1)!= NULL)){
-                int e = (*unbalanced1)->user_id;
-                *root = searchSubs(*root,e,unbalanced1,maxDepth);
-            }
-        }
-        else{
-            printf("Element not found\n");
-        }
-    }
-    else if((left_ht-right_ht) == 1){
-        // this will cover 2 cases
-        if(toDel->user_id < (*root)->user_id){
-            user_tree **temp_del =Search_AVL(root,toDel->user_id);
-            if(temp_del != NULL){
-                int deleted_value = (*temp_del)->user_id;
-                delete_AVL(temp_del);
-                // printf("element deleted\n");
-                printf("Ele %d deleted\n",deleted_value);
-            }
-            else{
-                printf("Element not found\n");
-            }
-        }
-        else{
-            user_tree **temp_del =Search_AVL(root,toDel->user_id);
-            if(temp_del != NULL){
-                int deleted_value = (*temp_del)->user_id;
-                delete_AVL(temp_del);//post this it is twice left tilted
-                printf("Root now is %d\n",(*root)->user_id);
-                printf("Ele %d deleted, now rotating \n",deleted_value);
-                
-                printf("max depth now is%d\n",*maxDepth); 
-                *maxDepth = -999999;  // Reset before recalculating height
-                int a = heightTree(*root,unbalanced1,maxDepth);
-                
-                printf("height of tree is %d\n",a);
-                if (unbalanced1 == NULL || *unbalanced1 == NULL) {
-                    printf("Unbalanced1 is NULL, skipping rotation\n");
-                } else {
-                    printf("Unbalanced node is %d\n", (*unbalanced1)->user_id);
-                    int e = (*unbalanced1)->user_id;
-                    *root = searchSubs(*root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
-                    printf("rotations req and done, root is %d\n",(*root)->user_id);
-                }
+expense_tree* deleteRotCndCheckNewExp(expense_tree **root, expense_tree* toDel,expense_tree** unbalanced1,int* maxDepth){
+    expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+    if(temp_del != NULL){
+        int deleted_value = (*temp_del)->expense_id;
+        delete_AVLExp(temp_del);
+        printf("Root now is %d\n",(*root)->expense_id);
+        // printf("Root->left is %d\n",(*root)->left->expense_id);
+        printf("Ele %d deleted, now rotating \n",deleted_value);
         
-                // if (abs(left_ht - right_ht) > 1) {
-                //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
-                // }
-                // root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
-                //here root is the true root which we are passing as the unbalanced one 
-            }
-        }
-    }
-    else if((right_ht-left_ht) == 1){
-        if(toDel->user_id > (*root)->user_id){
-            printf("checking RST \n");
-            user_tree **temp_del =Search_AVL(root,toDel->user_id);
-            printf("Done searching\n");
-            if(temp_del != NULL){
-                printf("inside delete block\n");
-                int deleted_value = (*temp_del)->user_id;
-                delete_AVL(temp_del);
-                printf("Ele %d deleted\n",deleted_value);
-                *maxDepth = -999999;
-                int a = heightTree((*root)->right,unbalanced1,maxDepth);
-                if((unbalanced1 != NULL)&&((*unbalanced1)!= NULL)){
-                    int e = (*unbalanced1)->user_id;
-                    *root = searchSubs(*root,e,unbalanced1,maxDepth);
-                }
-                //this had to be written bcos after temp_del has been deleted wecant access temp_del_>data right 
-            }
-            else{
-                printf("Element not found\n");
-            }
-        }
-        else {
-            user_tree **temp_del =Search_AVL(root,toDel->user_id);
-            if(temp_del != NULL){
-                int deleted_value = (*temp_del)->user_id;
-                delete_AVL(temp_del);//post this it is twice right tilted
-                printf("Ele %d deleted, now rotating \n",deleted_value);
-                // left_ht = heightTree((*root)->left, unbalanced1, maxDepth);
-                // right_ht = heightTree((*root)->right, unbalanced1, maxDepth);
-                printf("max depth now is%d\n",*maxDepth); 
-                *maxDepth = -999999;  // Reset before recalculating height
-                int a = heightTree(*root,unbalanced1,maxDepth);
-                
-                printf("height of tree is %d\n",a);
-                if (unbalanced1 == NULL || *unbalanced1 == NULL) {
-                    printf("Unbalanced1 is NULL, skipping rotation\n");
-                } else {
-                    printf("Unbalanced node is %d\n", (*unbalanced1)->user_id);
-                    int e = (*unbalanced1)->user_id;
-                    *root = searchSubs(*root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
-                    printf("rotations req and done, root is %d\n",(*root)->user_id);
-                }
-                
-                // if (abs(left_ht - right_ht) > 1) {
-                //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
-                // }
-                // *root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
-                //here root is the true root which we are passing as the unbalanced one 
-            }
-        }
-    }
+        printf("max depth now is%d\n",*maxDepth); 
+        *maxDepth = -999999;  // Reset before recalculating height
+        
+        int a = heightTreeExp((*root),unbalanced1,maxDepth);
 
+        printf("height of tree is %d\n",a);
+        if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+            printf("Unbalanced1 is NULL, skipping rotation\n");
+        } else {
+            printf("Unbalanced node is %d\n", (*unbalanced1)->expense_id);
+            int e = (*unbalanced1)->expense_id;
+            int u = (*unbalanced1)->member_id;
+            *root = searchSubsExp(*root,u,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+            printf("rotations req and done, root is %d\n",(*root)->expense_id);
+        }
+    }
     return *root;
 }
 
-fam_tree* deleteRotCndCheckFam(fam_tree **root, fam_tree* toDel,fam_tree** unbalanced1,int* maxDepth){
-    
-    int left_ht = heightTreeFam((*root)->left,unbalanced1,maxDepth);
-    int right_ht = heightTreeFam((*root)->right,unbalanced1,maxDepth);
-
-    if(left_ht == right_ht){
-        fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
-        if(temp_del != NULL){
-            int deleted_value = (*temp_del)->fam_id;
-            delete_AVLFam(temp_del);//initially it was &root
-            printf("Ele %d deleted\n",deleted_value);
-        }
-        else{
-            printf("Element not found\n");
-        }
-    }
-    else if((left_ht-right_ht) == 1){
-        // this will cover 2 cases
-        if(toDel->fam_id < (*root)->fam_id){
-            fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
-            if(temp_del != NULL){
-                int deleted_value = (*temp_del)->fam_id;
-                delete_AVLFam(temp_del);
-                // printf("element deleted\n");
-                printf("Ele %d deleted\n",deleted_value);
-            }
-            else{
-                printf("Element not found\n");
-            }
-        }
-        else{
-            fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
-            if(temp_del != NULL){
-                int deleted_value = (*temp_del)->fam_id;
-                delete_AVLFam(temp_del);//post this it is twice left tilted
-                printf("Root now is %d\n",(*root)->fam_id);
-                printf("Ele %d deleted, now rotating \n",deleted_value);
-                
-                printf("max depth now is%d\n",*maxDepth); 
-                *maxDepth = -999999;  // Reset before recalculating height
-                int a = heightTreeFam(*root,unbalanced1,maxDepth);
-                
-                printf("height of tree is %d\n",a);
-                if (unbalanced1 == NULL || *unbalanced1 == NULL) {
-                    printf("Unbalanced1 is NULL, skipping rotation\n");
-                } else {
-                    printf("Unbalanced node is %d\n", (*unbalanced1)->fam_id);
-                    int e = (*unbalanced1)->fam_id;
-                    *root = searchSubsFam(*root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
-                    printf("rotations req and done, root is %d\n",(*root)->fam_id);
-                }
+fam_tree* deleteRotCndCheckNewFam(fam_tree **root, fam_tree* toDel,fam_tree** unbalanced1,int* maxDepth){
+    fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
+    if(temp_del != NULL){
+        printf("fam found to be deleted\n");
+        int deleted_value = (*temp_del)->fam_id;
+        delete_AVLFam(temp_del);
+        printf("Root now is %d\n",(*root)->fam_id);
+        // printf("Root->left is %d\n",(*root)->left->fam_id);
+        printf("Ele %d deleted, now rotating \n",deleted_value);
         
-                // if (abs(left_ht - right_ht) > 1) {
-                //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
-                // }
-                // root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
-                //here root is the true root which we are passing as the unbalanced one 
-            }
-        }
-    }
-    else if((right_ht-left_ht) == 1){
-        if(toDel->fam_id > (*root)->fam_id){
-            printf("checking RST \n");
-            fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
-            printf("Done searching\n");
-            if(temp_del != NULL){
-                printf("inside delete block\n");
-                int deleted_value = (*temp_del)->fam_id;
-                delete_AVLFam(temp_del);
-                printf("Ele %d deleted\n",deleted_value);
-                //this had to be written bcos after temp_del has been deleted wecant access temp_del_>data right 
-            }
-            else{
-                printf("Element not found\n");
-            }
-        }
-        else {
-            fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
-            if(temp_del != NULL){
-                int deleted_value = (*temp_del)->fam_id;
-                delete_AVLFam(temp_del);//post this it is twice right tilted
-                printf("Ele %d deleted, now rotating \n",deleted_value);
-                // left_ht = heightTree((*root)->left, unbalanced1, maxDepth);
-                // right_ht = heightTree((*root)->right, unbalanced1, maxDepth);
-                printf("max depth now is%d\n",*maxDepth); 
-                *maxDepth = -999999;  // Reset before recalculating height
-                int a = heightTreeFam(*root,unbalanced1,maxDepth);
-                
-                printf("height of tree is %d\n",a);
-                if (unbalanced1 == NULL || *unbalanced1 == NULL) {
-                    printf("Unbalanced1 is NULL, skipping rotation\n");
-                } else {
-                    printf("Unbalanced node is %d\n", (*unbalanced1)->fam_id);
-                    int e = (*unbalanced1)->fam_id;
-                    *root = searchSubsFam(*root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
-                    printf("rotations req and done, root is %d\n",(*root)->fam_id);
-                }
-                
-                // if (abs(left_ht - right_ht) > 1) {
-                //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
-                // }
-                // *root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
-                //here root is the true root which we are passing as the unbalanced one 
-            }
-        }
-    }
+        printf("max depth now is%d\n",*maxDepth); 
+        *maxDepth = -999999;  // Reset before recalculating height
+        
+        int a = heightTreeFam((*root),unbalanced1,maxDepth);
 
+        printf("height of tree is %d\n",a);
+        if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+            printf("Unbalanced1 is NULL, skipping rotation\n");
+        } else {
+            printf("Unbalanced node is %d\n", (*unbalanced1)->fam_id);
+            int e = (*unbalanced1)->fam_id;
+            *root = searchSubsFam(*root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+            printf("rotations req and done, root is %d\n",(*root)->fam_id);
+        }
+    }
     return *root;
 }
+
+
+// expense_tree* deleteRotCndCheckExp(expense_tree **root, expense_tree* toDel,expense_tree** unbalanced1,int* maxDepth){
+    
+//     int left_ht = heightTreeExp((*root)->left,unbalanced1,maxDepth);
+//     int right_ht = heightTreeExp((*root)->right,unbalanced1,maxDepth);
+
+//     if(left_ht == right_ht){
+//         expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+//         if(temp_del != NULL){
+//             int deleted_value = (*temp_del)->expense_id;
+//             delete_AVLExp(temp_del);//initially it was &root
+//             printf("Ele %d deleted\n",deleted_value);
+//         }
+//         else{
+//             printf("Element not found\n");
+//         }
+//     }
+//     else if((left_ht-right_ht) == 1){
+//         // this will cover 2 cases
+//         if((toDel->member_id < (*root)->member_id)||((toDel->member_id == (*root)->member_id)&&(toDel->expense_id < (*root)->expense_id))){
+//             expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+//             if(temp_del != NULL){
+//                 int deleted_value = (*temp_del)->expense_id;
+//                 delete_AVLExp(temp_del);
+//                 // printf("element deleted\n");
+//                 printf("Ele %d deleted\n",deleted_value);
+//             }
+//             else{
+//                 printf("Element not found\n");
+//             }
+//         }
+//         else{
+//             expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+//             if(temp_del != NULL){
+//                 int deleted_value = (*temp_del)->expense_id;
+//                 delete_AVLExp(temp_del);//post this it is twice left tilted
+//                 printf("Root now is %d\n",(*root)->expense_id);
+//                 printf("Ele %d deleted, now rotating \n",deleted_value);
+                
+//                 printf("max depth now is%d\n",*maxDepth); 
+//                 *maxDepth = -999999;  // Reset before recalculating height
+//                 int a = heightTreeExp(*root,unbalanced1,maxDepth);
+                
+//                 printf("height of tree is %d\n",a);
+//                 if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+//                     printf("Unbalanced1 is NULL, skipping rotation\n");
+//                 } else {
+//                     printf("Unbalanced node is %d\n", (*unbalanced1)->expense_id);
+//                     int e = (*unbalanced1)->expense_id;
+//                     int u = (*unbalanced1)->member_id;
+//                     *root = searchSubsExp(*root,u,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+//                     printf("rotations req and done, root is %d\n",(*root)->expense_id);
+//                 }
+        
+//                 // if (abs(left_ht - right_ht) > 1) {
+//                 //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
+//                 // }
+//                 // root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
+//                 //here root is the true root which we are passing as the unbalanced one 
+//             }
+//         }
+//     }
+//     else if((right_ht-left_ht) == 1){
+//         if((toDel->member_id > (*root)->member_id)||((toDel->member_id == (*root)->member_id)&&(toDel->expense_id > (*root)->expense_id))){
+//             printf("checking RST \n");
+//             expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+//             printf("Done searching\n");
+//             if(temp_del != NULL){
+//                 printf("inside delete block\n");
+//                 int deleted_value = (*temp_del)->expense_id;
+//                 delete_AVLExp(temp_del);
+//                 printf("Ele %d deleted\n",deleted_value);
+//                 //this had to be written bcos after temp_del has been deleted wecant access temp_del_>data right 
+//             }
+//             else{
+//                 printf("Element not found\n");
+//             }
+//         }
+//         else {
+//             expense_tree **temp_del =searchInExpExpId(root,toDel->expense_id);
+//             if(temp_del != NULL){
+//                 int deleted_value = (*temp_del)->expense_id;
+//                 delete_AVLExp(temp_del);//post this it is twice right tilted
+//                 printf("Ele %d deleted, now rotating \n",deleted_value);
+//                 // left_ht = heightTree((*root)->left, unbalanced1, maxDepth);
+//                 // right_ht = heightTree((*root)->right, unbalanced1, maxDepth);
+//                 printf("max depth now is%d\n",*maxDepth); 
+//                 *maxDepth = -999999;  // Reset before recalculating height
+//                 int a = heightTreeExp(*root,unbalanced1,maxDepth);
+                
+//                 printf("height of tree is %d\n",a);
+//                 if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+//                     printf("Unbalanced1 is NULL, skipping rotation\n");
+//                 } else {
+//                     printf("Unbalanced node is %d\n", (*unbalanced1)->expense_id);
+//                     int e = (*unbalanced1)->expense_id;
+//                     int u = (*unbalanced1)->member_id;
+//                     *root = searchSubsExp(*root,u,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+//                     printf("rotations req and done, root is %d\n",(*root)->expense_id);
+//                 }
+                
+//                 // if (abs(left_ht - right_ht) > 1) {
+//                 //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
+//                 // }
+//                 // *root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
+//                 //here root is the true root which we are passing as the unbalanced one 
+//             }
+//         }
+//     }
+
+//     return *root;
+// }
+
+// user_tree* deleteRotCndCheckUser(user_tree **root, user_tree* toDel,user_tree** unbalanced1,int* maxDepth){
+    
+//     int left_ht = heightTree((*root)->left,unbalanced1,maxDepth);
+//     int right_ht = heightTree((*root)->right,unbalanced1,maxDepth);
+
+//     if(left_ht == right_ht){
+//         user_tree **temp_del =Search_AVL(root,toDel->user_id);
+//         if(temp_del != NULL){
+//             int deleted_value = (*temp_del)->user_id;
+//             delete_AVL(temp_del);//initially it was &root
+//             printf("Ele %d deleted\n",deleted_value);
+//             *maxDepth = -999999;
+//             int a = heightTree((*root)->right,unbalanced1,maxDepth);
+//             if((unbalanced1 != NULL)&&((*unbalanced1)!= NULL)){
+//                 int e = (*unbalanced1)->user_id;
+//                 *root = searchSubs(*root,e,unbalanced1,maxDepth);
+//             }
+//         }
+//         else{
+//             printf("Element not found\n");
+//         }
+//     }
+//     else if((left_ht-right_ht) == 1){
+//         // this will cover 2 cases
+//         if(toDel->user_id < (*root)->user_id){
+//             user_tree **temp_del =Search_AVL(root,toDel->user_id);
+//             if(temp_del != NULL){
+//                 int deleted_value = (*temp_del)->user_id;
+//                 delete_AVL(temp_del);
+//                 // printf("element deleted\n");
+//                 printf("Ele %d deleted\n",deleted_value);
+//             }
+//             else{
+//                 printf("Element not found\n");
+//             }
+//         }
+//         else{
+//             user_tree **temp_del =Search_AVL(root,toDel->user_id);
+//             if(temp_del != NULL){
+//                 int deleted_value = (*temp_del)->user_id;
+//                 delete_AVL(temp_del);//post this it is twice left tilted
+//                 printf("Root now is %d\n",(*root)->user_id);
+//                 printf("Ele %d deleted, now rotating \n",deleted_value);
+                
+//                 printf("max depth now is%d\n",*maxDepth); 
+//                 *maxDepth = -999999;  // Reset before recalculating height
+//                 int a = heightTree(*root,unbalanced1,maxDepth);
+                
+//                 printf("height of tree is %d\n",a);
+//                 if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+//                     printf("Unbalanced1 is NULL, skipping rotation\n");
+//                 } else {
+//                     printf("Unbalanced node is %d\n", (*unbalanced1)->user_id);
+//                     int e = (*unbalanced1)->user_id;
+//                     *root = searchSubs(*root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+//                     printf("rotations req and done, root is %d\n",(*root)->user_id);
+//                 }
+        
+//                 // if (abs(left_ht - right_ht) > 1) {
+//                 //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
+//                 // }
+//                 // root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
+//                 //here root is the true root which we are passing as the unbalanced one 
+//             }
+//         }
+//     }
+//     else if((right_ht-left_ht) == 1){
+//         if(toDel->user_id > (*root)->user_id){
+//             printf("checking RST \n");
+//             user_tree **temp_del =Search_AVL(root,toDel->user_id);
+//             printf("Done searching\n");
+//             if(temp_del != NULL){
+//                 printf("inside delete block\n");
+//                 int deleted_value = (*temp_del)->user_id;
+//                 delete_AVL(temp_del);
+//                 printf("Ele %d deleted\n",deleted_value);
+//                 *maxDepth = -999999;
+//                 int a = heightTree((*root)->right,unbalanced1,maxDepth);
+//                 if((unbalanced1 != NULL)&&((*unbalanced1)!= NULL)){
+//                     int e = (*unbalanced1)->user_id;
+//                     *root = searchSubs(*root,e,unbalanced1,maxDepth);
+//                 }
+//                 //this had to be written bcos after temp_del has been deleted wecant access temp_del_>data right 
+//             }
+//             else{
+//                 printf("Element not found\n");
+//             }
+//         }
+//         else {
+//             user_tree **temp_del =Search_AVL(root,toDel->user_id);
+//             if(temp_del != NULL){
+//                 int deleted_value = (*temp_del)->user_id;
+//                 delete_AVL(temp_del);//post this it is twice right tilted
+//                 printf("Ele %d deleted, now rotating \n",deleted_value);
+//                 // left_ht = heightTree((*root)->left, unbalanced1, maxDepth);
+//                 // right_ht = heightTree((*root)->right, unbalanced1, maxDepth);
+//                 printf("max depth now is%d\n",*maxDepth); 
+//                 *maxDepth = -999999;  // Reset before recalculating height
+//                 int a = heightTree(*root,unbalanced1,maxDepth);
+                
+//                 printf("height of tree is %d\n",a);
+//                 if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+//                     printf("Unbalanced1 is NULL, skipping rotation\n");
+//                 } else {
+//                     printf("Unbalanced node is %d\n", (*unbalanced1)->user_id);
+//                     int e = (*unbalanced1)->user_id;
+//                     *root = searchSubs(*root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+//                     printf("rotations req and done, root is %d\n",(*root)->user_id);
+//                 }
+                
+//                 // if (abs(left_ht - right_ht) > 1) {
+//                 //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
+//                 // }
+//                 // *root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
+//                 //here root is the true root which we are passing as the unbalanced one 
+//             }
+//         }
+//     }
+
+//     return *root;
+// }
+
+// fam_tree* deleteRotCndCheckFam(fam_tree **root, fam_tree* toDel,fam_tree** unbalanced1,int* maxDepth){
+    
+//     int left_ht = heightTreeFam((*root)->left,unbalanced1,maxDepth);
+//     int right_ht = heightTreeFam((*root)->right,unbalanced1,maxDepth);
+
+//     if(left_ht == right_ht){
+//         fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
+//         if(temp_del != NULL){
+//             int deleted_value = (*temp_del)->fam_id;
+//             delete_AVLFam(temp_del);//initially it was &root
+//             printf("Ele %d deleted\n",deleted_value);
+//         }
+//         else{
+//             printf("Element not found\n");
+//         }
+//     }
+//     else if((left_ht-right_ht) == 1){
+//         // this will cover 2 cases
+//         if(toDel->fam_id < (*root)->fam_id){
+//             fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
+//             if(temp_del != NULL){
+//                 int deleted_value = (*temp_del)->fam_id;
+//                 delete_AVLFam(temp_del);
+//                 // printf("element deleted\n");
+//                 printf("Ele %d deleted\n",deleted_value);
+//             }
+//             else{
+//                 printf("Element not found\n");
+//             }
+//         }
+//         else{
+//             fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
+//             if(temp_del != NULL){
+//                 int deleted_value = (*temp_del)->fam_id;
+//                 delete_AVLFam(temp_del);//post this it is twice left tilted
+//                 printf("Root now is %d\n",(*root)->fam_id);
+//                 printf("Ele %d deleted, now rotating \n",deleted_value);
+                
+//                 printf("max depth now is%d\n",*maxDepth); 
+//                 *maxDepth = -999999;  // Reset before recalculating height
+//                 int a = heightTreeFam(*root,unbalanced1,maxDepth);
+                
+//                 printf("height of tree is %d\n",a);
+//                 if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+//                     printf("Unbalanced1 is NULL, skipping rotation\n");
+//                 } else {
+//                     printf("Unbalanced node is %d\n", (*unbalanced1)->fam_id);
+//                     int e = (*unbalanced1)->fam_id;
+//                     *root = searchSubsFam(*root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+//                     printf("rotations req and done, root is %d\n",(*root)->fam_id);
+//                 }
+        
+//                 // if (abs(left_ht - right_ht) > 1) {
+//                 //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
+//                 // }
+//                 // root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
+//                 //here root is the true root which we are passing as the unbalanced one 
+//             }
+//         }
+//     }
+//     else if((right_ht-left_ht) == 1){
+//         if(toDel->fam_id > (*root)->fam_id){
+//             printf("checking RST \n");
+//             fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
+//             printf("Done searching\n");
+//             if(temp_del != NULL){
+//                 printf("inside delete block\n");
+//                 int deleted_value = (*temp_del)->fam_id;
+//                 delete_AVLFam(temp_del);
+//                 printf("Ele %d deleted\n",deleted_value);
+//                 //this had to be written bcos after temp_del has been deleted wecant access temp_del_>data right 
+//             }
+//             else{
+//                 printf("Element not found\n");
+//             }
+//         }
+//         else {
+//             fam_tree **temp_del =Search_AVLFam(root,toDel->fam_id);
+//             if(temp_del != NULL){
+//                 int deleted_value = (*temp_del)->fam_id;
+//                 delete_AVLFam(temp_del);//post this it is twice right tilted
+//                 printf("Ele %d deleted, now rotating \n",deleted_value);
+//                 // left_ht = heightTree((*root)->left, unbalanced1, maxDepth);
+//                 // right_ht = heightTree((*root)->right, unbalanced1, maxDepth);
+//                 printf("max depth now is%d\n",*maxDepth); 
+//                 *maxDepth = -999999;  // Reset before recalculating height
+//                 int a = heightTreeFam(*root,unbalanced1,maxDepth);
+                
+//                 printf("height of tree is %d\n",a);
+//                 if (unbalanced1 == NULL || *unbalanced1 == NULL) {
+//                     printf("Unbalanced1 is NULL, skipping rotation\n");
+//                 } else {
+//                     printf("Unbalanced node is %d\n", (*unbalanced1)->fam_id);
+//                     int e = (*unbalanced1)->fam_id;
+//                     *root = searchSubsFam(*root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+//                     printf("rotations req and done, root is %d\n",(*root)->fam_id);
+//                 }
+                
+//                 // if (abs(left_ht - right_ht) > 1) {
+//                 //     *root = checkRotate(unbalanced1, unbalanced1, maxDepth);
+//                 // }
+//                 // *root = checkRotate(root,unbalanced1,maxDepth); //all cases handled here 
+//                 //here root is the true root which we are passing as the unbalanced one 
+//             }
+//         }
+//     }
+
+//     return *root;
+// }
 
 
 
@@ -1915,7 +2017,7 @@ void update_delete_expense(fam_tree** f1, expense_tree** e1,expense_tree **unbal
             if(k==1){
                 printf("Exp changes updated everywhere\n");
             }
-            (*e1) = deleteRotCndCheckExp(e1,(*foundNode),unbalanced1,&maxDepthExp);
+            (*e1) = deleteRotCndCheckNewExp(e1,(*foundNode),unbalanced1,&maxDepthExp);
             printf("Expense deleted\n");
         }
         
@@ -2006,9 +2108,9 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
                     if(fam_node->count == 1){
                         user_tree* user_node = fam_node->next_user;
                         
-                        (*u1) = deleteRotCndCheckUser(u1,user_node,unbalanced1,maxDepth);
+                        (*u1) = deleteRotCndCheckNewUser(u1,user_node,unbalanced1,maxDepth);
                         printf("User deleted\n");
-                        (*f1) = deleteRotCndCheckFam(f1,fam_node,unbalanced1_fam,maxDepthFam);
+                        (*f1) = deleteRotCndCheckNewFam(f1,fam_node,unbalanced1_fam,maxDepthFam);
                         
                         printf("Family deleted\n");
                     }
@@ -2033,7 +2135,7 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
                             prev = trav_ptr;
                             trav_ptr = trav_ptr->next;
                         }
-                        (*u1) = deleteRotCndCheckUser(u1,user_del,unbalanced1,maxDepth);
+                        (*u1) = deleteRotCndCheckNewUser(u1,user_del,unbalanced1,maxDepth);
                         //remove from user tree too
                     }
                 }
@@ -2056,11 +2158,11 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
                 while(nptr != NULL) {
                     user_tree* next_node = nptr->next;
 
-                    // Sanity check before deletion
+                    
                     if (nptr != NULL) {
                         user_tree **searchNode = Search_AVL(u1, nptr->user_id);
                         if ((searchNode != NULL)&&((*searchNode)!= NULL)) {
-                            (*u1) = deleteRotCndCheckUser(u1, *searchNode, unbalanced1, maxDepth);
+                            (*u1) = deleteRotCndCheckNewUser(u1, *searchNode, unbalanced1, maxDepth);
                         } else {
                             printf("User %d not found in AVL tree\n", nptr->user_id);
                         }
@@ -2071,7 +2173,7 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
                 
                 printf("** Going to delete family **\n");
                 //check the above part it should work
-                (*f1) = deleteRotCndCheckFam(f1,(*foundNode),unbalanced1_fam,maxDepthFam);
+                (*f1) = deleteRotCndCheckNewFam(f1,(*foundNode),unbalanced1_fam,maxDepthFam);
                 printf("Family deleted\n");
 
                 //before deleting family, gointo family->next_user
@@ -2080,9 +2182,9 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
                 
 
             }
-            if((u1 == NULL)||((*u1)==NULL)){
-                printf("User_tree empty\n");
-            }
+            // if((u1 == NULL)||((*u1)==NULL)){
+            //     printf("User_tree empty\n");
+            // }
             printf("Hello guys\n");
             output_user((*u1));
             output_fam((*f1));
@@ -2449,7 +2551,7 @@ int main(){
     // addExpense(&root_exp,&root,&f1,&unbalanced1_exp,maxDepth_exp);
 
     // update_delete_expense(&f1,&root_exp,&unbalanced1_exp,maxDepth_exp);
-    // update_individual_fam_details(&root,&f1,&unbalanced1,&maxDepth,&unbalanced1_fam,&maxDepthFam);
+    update_individual_fam_details(&root,&f1,&unbalanced1,&maxDepth,&unbalanced1_fam,&maxDepthFam);
     // get_total_expense(&f1);
     // get_individual_expense(&root,&root_exp);
     // get_categorical_expense(&f1,&root,&root_exp);
