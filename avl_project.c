@@ -148,6 +148,22 @@ void rotateRightFam(fam_tree** r){
     
 }
 
+void rotateRightExpDate(expense_tree** r){
+    expense_tree* temp = *r;
+    if(*r == NULL){
+        printf("Error\n");
+    }
+    else if((*r)->left == NULL){
+        printf("Cannot rotate\n");
+    }
+    else{
+        temp = (*r)->left ;
+        (*r)->left = temp->right ;
+        temp->right = *r ;
+    }
+    *r = temp;
+    
+}
 
 
 void rotateLeft(user_tree** r){
@@ -186,6 +202,23 @@ void rotateLeftExp(expense_tree** r){
 
 void rotateLeftFam(fam_tree** r){
     fam_tree* temp = *r;
+    if(*r == NULL){
+        printf("Error\n");
+    }
+    else if((*r)->right == NULL){
+        printf("Cannot rotate\n");
+    }
+    else{
+        temp = (*r)->right ;
+        (*r)->right = temp->left ;
+        temp->left = *r ;
+    }
+    *r = temp ;
+    
+}
+
+void rotateLeftExpDate(expense_tree** r){
+    expense_tree* temp = *r;
     if(*r == NULL){
         printf("Error\n");
     }
@@ -284,6 +317,32 @@ int heightTreeFam(fam_tree*root,fam_tree** unbalanced1,int* maxDepth){
     return retval;
 }
 
+int heightTreeExpDate(expense_tree*root,expense_tree** unbalanced1,int* maxDepth){
+    int retval;
+    if(root == NULL){
+        retval = -1;
+    }
+    else{
+        int left_ht, right_ht ;
+        left_ht = heightTreeExpDate(root->left,unbalanced1,maxDepth);
+        right_ht = heightTreeExpDate(root->right,unbalanced1,maxDepth);
+
+        retval = 1 + ((left_ht > right_ht) ? left_ht : right_ht);
+        
+        if (abs(left_ht - right_ht) > 1) {
+            int currentDepth = retval;
+            if (*unbalanced1 == NULL || currentDepth > *maxDepth) { 
+                *unbalanced1 = root;
+                *maxDepth = currentDepth;  // Update maxDepth to this unbalanced node's depth
+                // printf("Unbalanced node is %d at depth %d\n", (*unbalanced1)->data, *maxDepth);
+                printf("Updated unbalanced1 = %d  at depth %d\n", root->date, *maxDepth);
+            }
+        }
+        
+    }
+    //yaha  initialy maxDeth ko kuch intmax rakhna 
+    return retval;
+}
 
 
 user_tree* checkRotate(user_tree **root,user_tree** unbalanced1, int* maxDepth) {
@@ -418,6 +477,50 @@ fam_tree* checkRotateFam(fam_tree **root,fam_tree** unbalanced1, int* maxDepth) 
     return (*root);
 }
 
+expense_tree* checkRotateExpDate(expense_tree **root,expense_tree** unbalanced1, int* maxDepth) {
+    // The root being passed is unbalanced.
+    // Now we need to check the LST and RST height and then accordingly move forward (4 cases).
+
+    int leftHeight = heightTreeExpDate((*root)->left, unbalanced1, maxDepth);
+    int rightHeight = heightTreeExpDate((*root)->right, unbalanced1, maxDepth);
+    
+    if (rightHeight > leftHeight) {
+        expense_tree* m = (*root)->right;
+        int mLeftHeight = heightTreeExpDate(m->left, unbalanced1, maxDepth);
+        int mRightHeight = heightTreeExpDate(m->right, unbalanced1, maxDepth);
+
+        if (abs(mLeftHeight - mRightHeight) == 1) {
+            if (mLeftHeight > mRightHeight) {
+                rotateRightExpDate(&((*root)->right));
+                rotateLeftExpDate(root);
+                printf("One right for bachha and one left for baap done\n");
+            } else {
+                rotateLeftExpDate(root);
+                printf("Baap rotated left\n");
+            }
+        }
+    } else {
+        expense_tree* m = (*root)->left;
+        int mLeftHeight = heightTreeExpDate(m->left, unbalanced1, maxDepth);
+        int mRightHeight = heightTreeExpDate(m->right, unbalanced1, maxDepth);
+
+        if (abs(mLeftHeight - mRightHeight) <= 1) {
+            if (mLeftHeight >= mRightHeight) {
+                rotateRightExpDate(root);
+                printf("Baap rotated right\n");
+                // printf("After rotation root is %d\n",(*root)->data);
+            } else {
+                rotateLeftExpDate(&((*root)->left));
+                rotateRightExpDate(root);
+                printf("One left for bachha and one right for baap done\n");
+            }
+        }
+    }
+    //imp step
+    // (*unbalanced1) = NULL ;
+    return (*root);
+}
+
 
 
 user_tree* searchSubs(user_tree *root,int e, user_tree**unbalanced1, int* maxDepth){
@@ -520,6 +623,38 @@ fam_tree* searchSubsFam(fam_tree *root,int e, fam_tree**unbalanced1, int* maxDep
     return root;
 }
 
+expense_tree* searchSubsExpDate(expense_tree *root,int e, expense_tree**unbalanced1, int* maxDepth){
+    if(root==NULL){return root;}
+    if(root->date == e){
+        root = checkRotateExpDate(unbalanced1,unbalanced1,maxDepth);
+        
+    }
+    else if((root->left != NULL)&&(root->left->date == e)){
+        expense_tree* rotatedTree = checkRotateExpDate(unbalanced1,unbalanced1,maxDepth);
+        root->left = rotatedTree ;
+        
+        
+    }
+    else if((root->right != NULL)&&(root->right->date == e)){
+        expense_tree* rotatedTree = checkRotateExpDate(unbalanced1,unbalanced1,maxDepth);
+        // printf("After insertion changed child root is %d\n",rotatedTree->user_id);
+        root->right = rotatedTree ; //glitch statemnt 
+        
+        
+    }
+    else{
+        if(root->date > e){
+            searchSubsExpDate(root->left,e,unbalanced1,maxDepth);
+        }
+        else{
+            searchSubsExpDate(root->right,e,unbalanced1,maxDepth);
+        }
+        
+    }
+
+    // printf("Final root is after searchSubs %d\n",root->user_id);
+    return root;
+}
 //the above fn is a bit doubtful regarding searching by expid
 //ig both userid and expid needs to be searched together 
 //corrections made
@@ -656,6 +791,46 @@ fam_tree* insertAVLFam(fam_tree* root ,fam_tree* n,fam_tree** unbalanced1, int* 
     return root;
 }
 
+expense_tree* insertAVLExpDate(expense_tree* root ,expense_tree* n,expense_tree ** unbalanced1, int* maxDepth){
+    
+    if(root == NULL){
+        root = n ;
+        printf("Ele inserted without changes is: %d\n", n->date);
+        return root;
+    }
+    
+    if(root->date < n->date){
+        root->right = insertAVLExpDate(root->right,n,unbalanced1,maxDepth);
+        
+    }
+    else if(root->date > n->date){
+        root->left = insertAVLExpDate(root->left,n,unbalanced1,maxDepth);
+    }
+    else{ 
+        printf("Element already exists\n");
+    }
+
+    (*unbalanced1) = NULL;
+    int a = heightTreeExpDate(root,unbalanced1,maxDepth);
+    if((*unbalanced1) != NULL){
+        printf("Unbalanced node after height calci is %d\n",(*unbalanced1)->date);
+    }
+    
+    // printf("Height of tree: %d\n",a);
+    
+    if(*unbalanced1 != NULL){
+        printf("Data unbalanced is %d\n",(*unbalanced1)->date);
+        //search for parent of *unbalanced1
+        int e = (*unbalanced1)->date;
+        root = searchSubsExpDate(root,e,unbalanced1,maxDepth); //copy of root me apan change karrahe hai, thats why it isnt visible outside
+        printf("rotations req and done, root is %d\n",root->date);
+    }
+    // else{
+    //     printf("Ele inserted without changes is:%d\n",n->data);
+    // }
+    return root;
+}
+
 
 
 user_tree** Search_AVL(user_tree** root_ref, int e) {
@@ -729,6 +904,26 @@ fam_tree** Search_AVLFam(fam_tree** root_ref, int e) {
     return retval;  
 }
 
+expense_tree** Search_AVLExpDate(expense_tree** root_ref, int e) {
+    expense_tree** retval = NULL;  
+    //modified my code so that it woud return a double pointer or a pointer to a
+    //parent reference
+
+    if (*root_ref == NULL) {
+        return NULL;  
+    }
+    if ((*root_ref)->date == e) {
+        retval = root_ref;  
+    } 
+    else if ((*root_ref)->date > e) {
+        retval = Search_AVLExpDate(&((*root_ref)->left), e);
+    } 
+    else {
+        retval = Search_AVLExpDate(&((*root_ref)->right), e);
+    }
+
+    return retval;  
+}
 
 
 void Visit(user_tree* root, FILE* file){
@@ -756,7 +951,14 @@ void VisitFam(fam_tree* root, FILE* file){
         fprintf(file, "\n");
     }    
 }
-//write VisitFam code
+
+void VisitExpDate(expense_tree* root, FILE* file){
+    if (root && file) {
+        fprintf(file, "%d,%d,%s,%.2f,%d\n", root->member_id, root->expense_id, root->expense_cat, root->exp_amt, root->date);
+    }
+}
+
+
 
 void inOrderTraversal(user_tree* root, FILE* file){
     if(root != NULL){
@@ -782,6 +984,13 @@ void inOrderTraversalFam(fam_tree* root, FILE* file){
     }
 }
 
+void inOrderTraversalExpDate(expense_tree*root, FILE* file){
+    if(root != NULL){
+        inOrderTraversalExpDate(root->left,file);
+        VisitExpDate(root,file);
+        inOrderTraversalExpDate(root->right,file);
+    }
+}
 
 
 int searchLinkedList(user_tree* lptr, int id, float expense,float income, fam_tree* root) {
@@ -1370,7 +1579,7 @@ void input_user(user_tree **root,fam_tree **f1,user_tree **unbalanced1,int maxDe
 
 void output_fam(fam_tree *root); //fn protoype
 
-void input_expense(expense_tree **root,fam_tree **f1, expense_tree **unbalanced1, int maxDepth) {
+void input_expense(expense_tree **root,expense_tree **root_date ,fam_tree **f1, expense_tree **unbalanced1, int maxDepth, expense_tree **unbalanced1_expdate, int maxDepth_expdate) {
     char line[150];  // Adjusted size to accommodate more fields
     FILE *file = fopen("input_expense.txt", "r");
     if (!file) {
@@ -1385,8 +1594,11 @@ void input_expense(expense_tree **root,fam_tree **f1, expense_tree **unbalanced1
 
         if (sscanf(line, "%d,%d,%49[^,],%f,%d", &mem_id, &exp_id, exp_cat, &exp_amt, &date) == 5) {
             expense_tree* expense_input = makeNode_expense(exp_id, exp_amt, exp_cat, date, mem_id);
+            expense_tree* expense_input_date = makeNode_expense(exp_id, exp_amt, exp_cat, date, mem_id);
+
             (*root) = insertAVLExp((*root), expense_input, unbalanced1, &maxDepth);
             float expense = expense_input->exp_amt;
+            (*root_date) = insertAVLExpDate((*root_date), expense_input_date, unbalanced1_expdate, &maxDepth_expdate);
             int a = searchInFamUser(f1,mem_id,expense,0);
             if(a==1){
                 printf("Expenses default added to family\n");
@@ -1407,6 +1619,14 @@ void input_expense(expense_tree **root,fam_tree **f1, expense_tree **unbalanced1
     inOrderTraversalExp((*root), outputFile);
     fclose(outputFile);
     //call inorder 
+
+    FILE *outputFileDate = fopen("exp_output_date.txt", "w");
+    if (!outputFileDate) {
+        perror("Error opening output_exp_date file");
+        // return EXIT_FAILURE;
+    }
+    inOrderTraversalExpDate((*root_date), outputFileDate);
+    fclose(outputFileDate);
 
     output_fam((*f1));
     
@@ -2124,27 +2344,107 @@ void get_highest_expense_day(fam_tree **f1, expense_tree **e1, user_tree ** u1){
 }
 
 
+void printExpINRange(expense_tree **root_ref,int u, int e1,int e2){
+      
+    //modified my code so that it woud return a double pointer or a pointer to a
+    //parent reference
+
+    if (*root_ref == NULL) {
+        return; 
+    }
+    if ((*root_ref)->member_id == u) {
+
+        if ((*root_ref)->expense_id > e1){
+            printExpINRange(&((*root_ref)->left), u, e1, e2);
+        }
+        
+
+        if(((*root_ref)->expense_id >= e1)&&((*root_ref)->expense_id <= e2)){
+            printf("Range exp amt is %f\n",(*root_ref)->exp_amt);
+        }
+
+        if((*root_ref)->expense_id < e2){
+            printExpINRange(&((*root_ref)->right),u,e1,e2);
+        }
+        
+    } 
+    else if ((*root_ref)->member_id > u) {
+        printExpINRange(&((*root_ref)->left),u,e1,e2);
+    } 
+    else {
+        printExpINRange(&((*root_ref)->right),u,e1,e2);
+    }
+
+    return; 
+}
+
+
+void printExpINRangeDate(expense_tree **root_ref,int date1,int date2){
+    if (*root_ref == NULL) {
+        return; 
+    }
+    if(((*root_ref)->date >= date1)&&((*root_ref)->date <= date2)){
+        printf("Date range exp amt is %f\n",(*root_ref)->exp_amt);
+    }
+    if ((*root_ref)->date > date1){
+        printExpINRangeDate(&((*root_ref)->left), date1,date2);
+    }
+    if ((*root_ref)->date < date2){
+        printExpINRangeDate(&((*root_ref)->right), date1,date2);
+    }
+
+}
+
+void rangeSearchExpId(expense_tree* e1){
+    
+    int exp_id1, exp_id2, user_id;
+    printf("Enter user_id: ");
+    scanf("%d",&user_id);
+    printf("Enter start of rangeSearchExpID : \n");
+    scanf("%d",&exp_id1);
+    printf("Enter end of rangeSearchExpID : \n");
+    scanf("%d",&exp_id2);
+
+    printExpINRange(&e1,user_id,exp_id1,exp_id2);
+}
+
+
+
+void rangeSearchDate(expense_tree* e1){
+    int date1,date2;
+    printf("Enter start of rangeSearchExpDate : \n");
+    scanf("%d",&date1);
+    printf("Enter end of rangeSearchExpDate : \n");
+    scanf("%d",&date2);
+    printExpINRangeDate(&e1,date1,date2);
+
+}
 
 int main(){
     user_tree* unbalanced1 = NULL;
     expense_tree* unbalanced1_exp = NULL;
+    expense_tree* unbalanced1_expdate = NULL;
     fam_tree* unbalanced1_fam = NULL;
     int maxDepth = __INT_MAX__ ;
     int maxDepth_exp = __INT_MAX__;
+    int maxDepth_expdate = __INT_MAX__;
     int maxDepthFam = __INT_MAX__;
     user_tree* root = NULL;
     expense_tree* root_exp = NULL;
+    expense_tree* root_exp_date = NULL;
     fam_tree* f1 = NULL;
     int cj;
     int fam_id = 0;
 
     input_user(&root,&f1,&unbalanced1,maxDepth,&fam_id,&unbalanced1_fam,maxDepthFam);
-    input_expense(&root_exp,&f1,&unbalanced1_exp,maxDepth_exp);
+    input_expense(&root_exp,&root_exp_date,&f1,&unbalanced1_exp,maxDepth_exp,&unbalanced1_expdate,maxDepth_expdate);
     //make an input function to take user inputfrom file 
     //after this call the addUser
     
 
     // addUser(&root,&cj,&fam_id,&f1,&unbalanced1,maxDepth,&unbalanced1_fam,maxDepthFam);
+    
+
     // printf("User root is %d\n",root->user_id);// working good 
     // addExpense(&root_exp,&root,&f1,&unbalanced1_exp,maxDepth_exp);
 
@@ -2154,6 +2454,8 @@ int main(){
     // get_individual_expense(&root,&root_exp);
     // get_categorical_expense(&f1,&root,&root_exp);
     // get_highest_expense_day(&f1,&root_exp,&root);
+    // rangeSearchExpId(root_exp);
+    // rangeSearchDate(root_exp_date);
 
 
 }
