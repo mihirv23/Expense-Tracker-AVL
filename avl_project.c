@@ -1077,7 +1077,7 @@ void delete_AVLExp(expense_tree **parent_ptr){
     else{
         if((r->left == NULL)&&(r->right == NULL)){
             //leaf node case 
-            free(r);
+            // free(r);
             *parent_ptr = NULL;
         }
         else if(r->left == NULL){
@@ -1114,7 +1114,7 @@ void delete_AVL(user_tree **parent_ptr){
     else{
         if((r->left == NULL)&&(r->right == NULL)){
             //leaf node case 
-            free(r);
+            // free(r);
             *parent_ptr = NULL;
         }
         else if(r->left == NULL){
@@ -1151,7 +1151,7 @@ void delete_AVLFam(fam_tree **parent_ptr){
     else{
         if((r->left == NULL)&&(r->right == NULL)){
             //leaf node case 
-            free(r);
+            // free(r);
             *parent_ptr = NULL;
         }
         else if(r->left == NULL){
@@ -1646,6 +1646,7 @@ void input_user(user_tree **root,fam_tree **f1,user_tree **unbalanced1,int maxDe
                     }
                     ptr1->next = user_input;
                     (*ptr)->fam_income += user_input->income;
+                    (*ptr)->count += 1;
                 }
                 //searh for family id by ptr =search_AVL_fam()
                 //*ptr->next_user and run while loop until it is not null
@@ -1830,6 +1831,8 @@ void addUser(user_tree** root, int* cj, int* family_id, fam_tree** f1,user_tree 
         }
     }
     printf("User added \n");
+    output_user((*root));
+    output_fam((*f1));
 }
 
 
@@ -1923,11 +1926,13 @@ void create_joinFamily(int* cj, fam_tree** f1, user_tree* made_from_makeuser,int
 
             //search if it exists 
             fam_tree **ptr = Search_AVLFam(f1,family_id);
+
             if(ptr == NULL){
                 fam_id_found = 0;
                 printf("Family dosent exist\n");
             }
             if((ptr != NULL)&&((*ptr)!=NULL)&&((*ptr)->fam_id == family_id)){
+                printf("Family size is %d\n",(*ptr)->count);
                 if((*ptr)->count < 4){
                     fam_id_found = 1;
                     user_tree* ptr3 = (*ptr)->next_user;
@@ -1937,7 +1942,7 @@ void create_joinFamily(int* cj, fam_tree** f1, user_tree* made_from_makeuser,int
                     }
                     ptr3->next = made_from_makeuser ;
                     (*ptr)->fam_income = (*ptr)->fam_income + made_from_makeuser->income;
-                    (*ptr)->count += 1;
+                    (*ptr)->count = (*ptr)->count + 1;
                     //ouptut_fam((*f1));
                 }
                 else{
@@ -2137,6 +2142,7 @@ void update_individual_fam_details(user_tree **u1, fam_tree **f1,user_tree **unb
                         }
                         (*u1) = deleteRotCndCheckNewUser(u1,user_del,unbalanced1,maxDepth);
                         //remove from user tree too
+                        printf("User deleted from user tree too");
                     }
                 }
             }
@@ -2545,7 +2551,7 @@ int main(){
     
 
     // addUser(&root,&cj,&fam_id,&f1,&unbalanced1,maxDepth,&unbalanced1_fam,maxDepthFam);
-    
+    // addUser(&root,&cj,&fam_id,&f1,&unbalanced1,maxDepth,&unbalanced1_fam,maxDepthFam);
 
     // printf("User root is %d\n",root->user_id);// working good 
     // addExpense(&root_exp,&root,&f1,&unbalanced1_exp,maxDepth_exp);
