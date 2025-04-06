@@ -1953,6 +1953,23 @@ float collectCategoryExpenseForUser(expense_tree* root, int target_user_id, cons
     return total;
 }
 
+void collectDateForUser(expense_tree* root, int target_user_id,float date_arr[]) {
+    if (root == NULL) return;
+
+    // Traverse left subtree
+    collectDateForUser(root->left, target_user_id, date_arr);
+
+    // If this node belongs to the user
+    if (root->member_id == target_user_id) {
+        date_arr[root->date - 1] += root->exp_amt;
+    }
+
+    // Continue only if current user_id is <= target
+    if (root->member_id <= target_user_id) {
+        collectDateForUser(root->right, target_user_id, date_arr);
+    }
+}
+
 
 void get_individual_expense(user_tree** u1, expense_tree** e1){
     int id, is_true_user = 1, found = 0, found1 = 0;
@@ -2069,6 +2086,42 @@ void get_categorical_expense(fam_tree **f1, user_tree **u1, expense_tree **e1){
 
 }
 
+void get_highest_expense_day(fam_tree **f1, expense_tree **e1, user_tree ** u1){
+    int fam_id;
+    float date_arr[10];
+    for(int i = 0 ;i<10; i++){
+        date_arr[i] = 0.00;
+    }
+
+    printf("For which family id do you want to calculate the highest expense day: \n");
+    scanf("%d",&fam_id);
+
+    fam_tree **found = Search_AVLFam(f1,fam_id);
+    if(found == NULL){
+        printf("Family id dosent exist\n");
+    }
+    if((found != NULL)&&((*found)!= NULL)){
+        printf("Entered date check\n");
+        user_tree* nptr = (*found)->next_user;
+        while(nptr != NULL){
+            collectDateForUser((*e1),nptr->user_id,date_arr);
+            nptr = nptr->next;
+
+        }
+        float max=date_arr[0];
+        int loc=0;
+        for(int m=0;m<10;m++){
+            if(date_arr[m]>max){
+                max=date_arr[m];
+                loc=m;
+            }
+        }
+
+        printf("Date at which maximum family expense incurred is %d \n",loc+1);
+        printf("Expense amount is %f \n",max);
+        
+    }
+}
 
 
 
@@ -2099,7 +2152,9 @@ int main(){
     // update_individual_fam_details(&root,&f1,&unbalanced1,&maxDepth,&unbalanced1_fam,&maxDepthFam);
     // get_total_expense(&f1);
     // get_individual_expense(&root,&root_exp);
-    get_categorical_expense(&f1,&root,&root_exp);
+    // get_categorical_expense(&f1,&root,&root_exp);
+    // get_highest_expense_day(&f1,&root_exp,&root);
+
 
 }
 
