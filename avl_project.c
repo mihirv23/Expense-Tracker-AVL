@@ -2238,21 +2238,24 @@ void printExpINRange(expense_tree **root_ref,int u, int e1,int e2){
 }
 
 
-void printExpINRangeDate(expense_tree **root_ref,int date1,int date2){
-    if (*root_ref == NULL) {
-        return; 
-    }
-    if(((*root_ref)->date >= date1)&&((*root_ref)->date <= date2)){
-        printf("Date range exp amt is %f\n",(*root_ref)->exp_amt);
-    }
-    if ((*root_ref)->date > date1){
-        printExpINRangeDate(&((*root_ref)->left), date1,date2);
-    }
-    if ((*root_ref)->date < date2){
-        printExpINRangeDate(&((*root_ref)->right), date1,date2);
+void printExpINRangeDate(expense_tree **root_ref, int date1, int date2) {
+    //we are req to traverse all nodes bcos tree is not sorted based on date 
+    if (*root_ref == NULL)
+        return;
+
+    
+    printExpINRangeDate(&((*root_ref)->left), date1, date2);
+
+    
+    if ((*root_ref)->date >= date1 && (*root_ref)->date <= date2) {
+        printf("Expense ID: %d, User ID: %d, Amount: %.2f, Date: %d\n",
+               (*root_ref)->expense_id, (*root_ref)->member_id, (*root_ref)->exp_amt, (*root_ref)->date);
     }
 
+    
+    printExpINRangeDate(&((*root_ref)->right), date1, date2);
 }
+
 
 void rangeSearchExpId(expense_tree* e1){
     
@@ -2314,7 +2317,7 @@ int main(){
     // get_categorical_expense(&f1,&root,&root_exp);
     // get_highest_expense_day(&f1,&root_exp,&root);
     // rangeSearchExpId(root_exp);
-    // rangeSearchDate(root_exp_date);
+    rangeSearchDate(root_exp);
 
 
 }
