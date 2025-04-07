@@ -1305,7 +1305,7 @@ void deleteExpenseFromUserID(expense_tree **e1, int user_id, fam_tree **f1,
     printf("Inside deleteexpenseFromUserID\n");
     expense_tree **toDel_ref = NULL;
     printf("Before deleting, the tree looks like:\n");
-    printExpenseTree(*e1);
+    // printExpenseTree(*e1);
 
     while ((toDel_ref = recurseExpUserid(e1, user_id)) != NULL) {
         printf("Inside expesne deletion for userid");
@@ -2307,8 +2307,8 @@ int main(){
     // printf("User root is %d\n",root->user_id);// working good 
     // addExpense(&root_exp,&root,&f1,&unbalanced1_exp,maxDepth_exp);
 
-    // update_delete_expense(&f1,&root_exp,&unbalanced1_exp,maxDepth_exp);
-    update_individual_fam_details(&root,&f1,&root_exp,&unbalanced1,&maxDepth,&unbalanced1_fam,&maxDepthFam,&unbalanced1_exp,&maxDepth_exp);
+    update_delete_expense(&f1,&root_exp,&unbalanced1_exp,maxDepth_exp);
+    // update_individual_fam_details(&root,&f1,&root_exp,&unbalanced1,&maxDepth,&unbalanced1_fam,&maxDepthFam,&unbalanced1_exp,&maxDepth_exp);
     // get_total_expense(&f1);
     // get_individual_expense(&root,&root_exp);
     // get_categorical_expense(&f1,&root,&root_exp);
