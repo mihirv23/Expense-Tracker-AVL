@@ -73,6 +73,7 @@ void rotateRight(user_tree** r){
     }
     *r = temp;
 }
+```
 ## 🚀 Future Enhancements
 
 - 🔹 **Graphical User Interface (GUI):** Implement a Tkinter-based desktop app or a web dashboard for improved user interaction.
